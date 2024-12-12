@@ -37,9 +37,9 @@
 npm install @firefuse/react
 ```
 
-### Usage in the application
+## Usage in the application
 
-#### Set the firebase auth configuration
+### Set the firebase auth configuration
 
 ```jsx
 import { getAuth } from 'firebase/auth';
@@ -68,7 +68,7 @@ const firebaseAuth = getAuth(firebaseApp);
 export { firebaseAuth };
 ```
 
-#### Use the `FirefuseProvider`
+### Use the `FirefuseProvider`
 
 ```jsx
 import React from 'react';
@@ -79,11 +79,97 @@ const App = () => {
   return (
     <FirefuseProvider
       domain="my-app.firefuse.io"
-      redirectUrl="https://my-app.com"
+      redirectUrl={window.location.origin}
       firebaseAuth={firebaseAuth}
     >
       <h1>Firefuse</h1>
     </FirefuseProvider>
+  );
+};
+```
+
+### Check if user is authenticated
+
+```jsx
+import React from 'react';
+import { useAuth } from '@firefuse/react';
+
+const Home = () => {
+  const { isAuthenticated, user, loginWithRedirect, logout } = useAuth();
+
+  return (
+    <div>
+      {isAuthenticated ? (
+        <div>
+          <h1>Welcome {user.displayName}</h1>
+          <button onClick={() => logout()}>Logout</button>
+        </div>
+      ) : (
+        <div>
+          <h1>Welcome Guest</h1>
+          <button onClick={() => loginWithRedirect({ redirectUrl: window.location.origin })}>Login</button>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+### Protecting routes
+
+#### Create a `PrivateRoute` component
+
+```jsx
+import React from 'react';
+import { Route, Redirect } from 'react-router-dom';
+import { useAuth } from '@firefuse/react';
+
+const PrivateRoute = ({ children, ...rest }) => {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Route
+      {...rest}
+      render={({ location }) =>
+        isAuthenticated ? (
+          children
+        ) : (
+          <Redirect
+            to={{
+              pathname: '/login',
+              state: { from: location },
+            }}
+          />
+        )
+      }
+    />
+  );
+};
+
+export default PrivateRoute;
+```
+
+#### Use the `PrivateRoute`
+
+```jsx
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import PrivateRoute from './PrivateRoute';
+import Home from './Home';
+import Login from './Login';
+
+const App = () => {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/login">
+          <Login />
+        </Route>
+        <PrivateRoute path="/">
+          <Home />
+        </PrivateRoute>
+      </Switch>
+    </Router>
   );
 };
 ```

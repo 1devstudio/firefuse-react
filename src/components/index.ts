@@ -1,1 +1,1 @@
-export * from './FirefuseProvider'
+export * from './FirefuseProvider';
