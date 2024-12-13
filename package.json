@@ -1,6 +1,6 @@
 {
   "name": "@firefuse/react",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Firefuse react library",
   "type": "module",
   "main": "dist/index.cjs.js",

@@ -28,15 +28,30 @@ type Props = {
 };
 
 type LoginParams = {
+  /**
+   * The redirect URL to be used after authenticating in Firefuse.
+   */
   redirectUrl?: string;
+};
+
+type LogoutParams = {
+  /**
+   * The redirect URL to be used after logging out. When empty it will redirect to sign in page.
+   */
+  redirectUrl?: string;
+  /**
+   * Whether to prevent the redirect after logging out.
+   */
+  noRedirect?: boolean;
 };
 
 type AuthContextProps = {
   isLoading: boolean;
   isAuthenticated: boolean;
   user: User | null;
-  loginWithRedirect: (params: LoginParams) => void;
-  logout: () => Promise<void>;
+  loginWithRedirect: (params?: LoginParams) => void;
+  registerWithRedirect: (params?: LoginParams) => void;
+  logout: (params?: LogoutParams) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextProps>({
@@ -46,7 +61,10 @@ const AuthContext = createContext<AuthContextProps>({
   loginWithRedirect: (_params: LoginParams = {}) => {
     /* noop */
   },
-  logout: async () => {
+  registerWithRedirect: (_params: LoginParams = {}) => {
+    /* noop */
+  },
+  logout: async (_params: LogoutParams = {}) => {
     /* noop */
   },
 });
@@ -74,6 +92,7 @@ export const FirefuseProvider = ({ domain, redirectUrl, firebaseAuth, children, 
       signInWithCustomToken(firebaseAuth, token)
         .then((user) => {
           logger.log('🔥 signed in successfully', user);
+          window.history.replaceState({}, document.title, window.location.pathname);
         })
         .catch(logger.error)
         .finally(() => {
@@ -113,10 +132,37 @@ export const FirefuseProvider = ({ domain, redirectUrl, firebaseAuth, children, 
     [domain, redirectUrl, logger],
   );
 
-  const logout = useCallback(() => {
-    logger.log('🔥 logout');
-    return signOut(firebaseAuth);
-  }, [firebaseAuth, logger]);
+  const registerWithRedirect = useCallback(
+    (params: LoginParams = {}) => {
+      logger.log('🔥 redirect to Firefuse');
+      window.location.replace(
+        `https://${domain}/sign-up?state=${btoa(
+          JSON.stringify({
+            redirectUrl: params.redirectUrl || redirectUrl,
+          }),
+        )}`,
+      );
+    },
+    [domain, redirectUrl, logger],
+  );
+
+  const logout = useCallback(
+    async (params: LogoutParams = {}) => {
+      logger.log('🔥 logout');
+      await signOut(firebaseAuth);
+      if (!params.noRedirect) {
+        window.location.replace(
+          params.redirectUrl ||
+            `https://${domain}/sign-up?state=${btoa(
+              JSON.stringify({
+                redirectUrl,
+              }),
+            )}`,
+        );
+      }
+    },
+    [firebaseAuth, logger, domain, redirectUrl],
+  );
 
   if (state.loading) return loader || null;
 
@@ -127,6 +173,7 @@ export const FirefuseProvider = ({ domain, redirectUrl, firebaseAuth, children, 
         isAuthenticated: !!state.user,
         isLoading: state.loading,
         loginWithRedirect,
+        registerWithRedirect,
         logout,
       }}
     >
