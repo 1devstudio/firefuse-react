@@ -46,11 +46,42 @@ type LogoutParams = {
 };
 
 type AuthContextProps = {
+  /**
+   * Whether the user is still loading
+   */
   isLoading: boolean;
+  /**
+   * Whether the user is authenticated
+   */
   isAuthenticated: boolean;
+  /**
+   * The current user
+   */
   user: User | null;
+  /**
+   * Redirects the user to the Firefuse login page
+   * @param params: LoginParams
+   */
   loginWithRedirect: (params?: LoginParams) => void;
+  /**
+   * Gets the login URL
+   * @param params: LoginParams
+   */
+  getLoginUrl: (params?: LoginParams) => string;
+  /**
+   * Redirects the user to the Firefuse register page
+   * @param params: LoginParams
+   */
   registerWithRedirect: (params?: LoginParams) => void;
+  /**
+   * Gets the register URL
+   * @param params: LoginParams
+   */
+  getRegisterUrl: (params?: LoginParams) => string;
+  /**
+   * Logs out the user
+   * @param params: LogoutParams
+   */
   logout: (params?: LogoutParams) => Promise<void>;
 };
 
@@ -61,9 +92,11 @@ const AuthContext = createContext<AuthContextProps>({
   loginWithRedirect: (_params: LoginParams = {}) => {
     /* noop */
   },
+  getLoginUrl: (_params: LoginParams = {}) => '',
   registerWithRedirect: (_params: LoginParams = {}) => {
     /* noop */
   },
+  getRegisterUrl: (_params: LoginParams = {}) => '',
   logout: async (_params: LogoutParams = {}) => {
     /* noop */
   },
@@ -164,6 +197,28 @@ export const FirefuseProvider = ({ domain, redirectUrl, firebaseAuth, children, 
     [firebaseAuth, logger, domain, redirectUrl],
   );
 
+  const getLoginUrl = useCallback(
+    (params: LoginParams = {}) => {
+      return `https://${domain}/sign-in?state=${btoa(
+        JSON.stringify({
+          redirectUrl: params.redirectUrl || redirectUrl,
+        }),
+      )}`;
+    },
+    [domain, redirectUrl],
+  );
+
+  const getRegisterUrl = useCallback(
+    (params: LoginParams = {}) => {
+      return `https://${domain}/sign-up?state=${btoa(
+        JSON.stringify({
+          redirectUrl: params.redirectUrl || redirectUrl,
+        }),
+      )}`;
+    },
+    [domain, redirectUrl],
+  );
+
   if (state.loading) return loader || null;
 
   return (
@@ -175,6 +230,8 @@ export const FirefuseProvider = ({ domain, redirectUrl, firebaseAuth, children, 
         loginWithRedirect,
         registerWithRedirect,
         logout,
+        getLoginUrl,
+        getRegisterUrl,
       }}
     >
       {children}

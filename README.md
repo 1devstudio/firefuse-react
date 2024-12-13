@@ -41,7 +41,7 @@ npm install @firefuse/react
 
 ### Set the firebase auth configuration
 
-```jsx
+```tsx
 import { getAuth } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 
@@ -70,7 +70,7 @@ export { firebaseAuth };
 
 ### Use the `FirefuseProvider`
 
-```jsx
+```tsx
 import React from 'react';
 import { FirefuseProvider } from '@firefuse/react';
 import { firebaseAuth } from '../config/firebase';
@@ -90,7 +90,7 @@ const App = () => {
 
 ### Check if user is authenticated
 
-```jsx
+```tsx
 import React from 'react';
 import { useAuth } from '@firefuse/react';
 
@@ -119,29 +119,17 @@ const Home = () => {
 
 #### Create a `PrivateRoute` component
 
-```jsx
-import React from 'react';
-import { Route, Redirect } from 'react-router-dom';
+```tsx
+import { Route, Navigate, RouteProps } from 'react-router';
 import { useAuth } from '@firefuse/react';
 
-const PrivateRoute = ({ children, ...rest }) => {
-  const { isAuthenticated } = useAuth();
+const PrivateRoute = ({element, ...rest}: RouteProps) => {
+  const { isAuthenticated, getLoginUrl } = useAuth();
 
   return (
     <Route
       {...rest}
-      render={({ location }) =>
-        isAuthenticated ? (
-          children
-        ) : (
-          <Redirect
-            to={{
-              pathname: '/login',
-              state: { from: location },
-            }}
-          />
-        )
-      }
+      element={isAuthenticated ? element : <Navigate to={getLoginUrl()} />}
     />
   );
 };
@@ -151,40 +139,36 @@ export default PrivateRoute;
 
 #### Use the `PrivateRoute`
 
-```jsx
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import PrivateRoute from './PrivateRoute';
-import Home from './Home';
-import Login from './Login';
+```tsx
+import './App.css'
+import {Route, Routes} from "react-router";
+import Home from "./pages/Home.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
+import PrivateRoute from "./components/PrivateRoute.tsx";
 
-const App = () => {
+function App() {
   return (
-    <Router>
-      <Switch>
-        <Route path="/login">
-          <Login />
-        </Route>
-        <PrivateRoute path="/">
-          <Home />
-        </PrivateRoute>
-      </Switch>
-    </Router>
-  );
-};
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <PrivateRoute path="/about" element={<Dashboard />} />
+    </Routes>
+  )
+}
+
+export default App;
 ```
 
 #### Debugging
 
 To get more details in the dev console you can also provide additional param `debug`.
 
-```jsx
+```tsx
 <FirefuseProvider
-    {...otherParams}
-    debug={true}
-  >
-    <h1>Firefuse</h1>
-  </FirefuseProvider>
+  {...otherParams}
+  debug={true}
+>
+  <h1>Firefuse</h1>
+</FirefuseProvider>
 ```
 
 ## Contributing
