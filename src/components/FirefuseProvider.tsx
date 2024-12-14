@@ -182,17 +182,17 @@ export const FirefuseProvider = ({ domain, redirectUrl, firebaseAuth, children, 
   const logout = useCallback(
     async (params: LogoutParams = {}) => {
       logger.log('🔥 logout');
-      await signOut(firebaseAuth);
       if (!params.noRedirect) {
         window.location.replace(
           params.redirectUrl ||
-            `https://${domain}/sign-up?state=${btoa(
+            `https://${domain}/sign-in?state=${btoa(
               JSON.stringify({
                 redirectUrl,
               }),
             )}`,
         );
       }
+      await signOut(firebaseAuth);
     },
     [firebaseAuth, logger, domain, redirectUrl],
   );

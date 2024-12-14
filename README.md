@@ -117,40 +117,46 @@ const Home = () => {
 
 ### Protecting routes
 
-#### Create a `PrivateRoute` component
+#### Create a `ProtectedRoutes` component
 
 ```tsx
-import { Route, Navigate, RouteProps } from 'react-router';
-import { useAuth } from '@firefuse/react';
+import {useAuth} from "@firefuse/react";
+import {Outlet} from "react-router";
+import {useEffect} from "react";
 
-const PrivateRoute = ({element, ...rest}: RouteProps) => {
+export const ProtectedRoutes = () => {
   const { isAuthenticated, getLoginUrl } = useAuth();
 
-  return (
-    <Route
-      {...rest}
-      element={isAuthenticated ? element : <Navigate to={getLoginUrl()} />}
-    />
-  );
-};
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl({ redirectUrl: window.location.href });
+    }
+  }, [isAuthenticated, getLoginUrl]);
 
-export default PrivateRoute;
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return <Outlet/>;
+}
 ```
 
-#### Use the `PrivateRoute`
+#### Use the `ProtectedRoutes` component
 
 ```tsx
 import './App.css'
 import {Route, Routes} from "react-router";
 import Home from "./pages/Home.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
-import PrivateRoute from "./components/PrivateRoute.tsx";
+import {ProtectedRoutes} from "./components/ProtectedRoutes.tsx";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <PrivateRoute path="/about" element={<Dashboard />} />
+      <Route element={<ProtectedRoutes/>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Route>
     </Routes>
   )
 }
