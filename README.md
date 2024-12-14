@@ -125,13 +125,13 @@ import {Outlet} from "react-router";
 import {useEffect} from "react";
 
 export const ProtectedRoutes = () => {
-  const { isAuthenticated, getLoginUrl } = useAuth();
+  const { isAuthenticated, getAuthUrl } = useAuth();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      window.location.href = getLoginUrl({ redirectUrl: window.location.href });
+      window.location.href = getAuthUrl({ redirectUrl: window.location.href });
     }
-  }, [isAuthenticated, getLoginUrl]);
+  }, [isAuthenticated, getAuthUrl]);
 
   if (!isAuthenticated) {
     return null;
